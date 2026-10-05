@@ -1,0 +1,45 @@
+.hp-fill {
+  transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.answer.is-correct,
+.answer.is-wrong,
+.answer.is-key {
+  animation: answer-pop 280ms cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+.heart.is-breaking {
+  animation: heart-break 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes answer-pop {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.07);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes heart-break {
+  0% {
+    transform: scale(1.2) rotate(-8deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hp-fill,
+  .answer.is-correct,
+  .answer.is-wrong,
+  .answer.is-key,
+  .heart.is-breaking {
+    animation: none;
+    transition: none;
+  }
+}

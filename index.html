@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Dungeons & Puzzles</title>
+    <link rel="stylesheet" href="css/game.css" />
+    <link rel="stylesheet" href="css/animations.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header class="hud">
+        <div class="hud-level">
+          <p class="eyebrow" id="level-kicker">Aventura</p>
+          <h1 id="level-name">Dungeons & Puzzles</h1>
+          <p id="progress" hidden>Pregunta 1</p>
+        </div>
+        <div class="hud-meters" id="meters" hidden>
+          <div class="hearts" id="hearts" role="img" aria-label="3 de 3 corazones"></div>
+          <div
+            class="hp"
+            id="hp"
+            role="meter"
+            aria-valuemin="0"
+            aria-valuenow="3"
+            aria-valuemax="3"
+            aria-label="Vida del dragón: 3 de 3"
+          >
+            <span class="hp-fill" id="hp-fill"></span>
+            <span class="hp-label" id="hp-label">3 / 3</span>
+          </div>
+          <p class="locks" id="locks" hidden>Aciertos 0 / 3</p>
+        </div>
+      </header>
+
+      <div class="stage" id="stage">
+        <canvas id="scene" width="960" height="540" aria-hidden="true"></canvas>
+      </div>
+
+      <section class="dock" id="dock" hidden aria-labelledby="prompt">
+        <p id="status" class="status" aria-live="polite"></p>
+        <p id="prompt" class="prompt">? × ? = ?</p>
+        <div class="answers" id="answers" role="group" aria-label="Respuestas"></div>
+      </section>
+    </div>
+
+    <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="overlay-title">
+      <div class="card">
+        <p class="eyebrow" id="overlay-kicker">Aventura</p>
+        <h2 id="overlay-title">Dungeons & Puzzles</h2>
+        <p id="overlay-body">Un caballero, un dragón y las tablas de multiplicar.</p>
+        <button type="button" id="overlay-action">Entrar a la cueva</button>
+      </div>
+    </div>
+
+    <button type="button" id="sound-toggle" class="sound-toggle" aria-pressed="false" aria-label="Silenciar sonido">
+      <span class="sound-glyph" aria-hidden="true">♪</span>
+    </button>
+
+    <script type="module" src="js/game.js"></script>
+  </body>
+</html>

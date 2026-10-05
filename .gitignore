@@ -1,0 +1,19 @@
+# Editor y agentes locales
+.cursor/
+.agents/
+skills-lock.json
+
+# Grafo generado
+graphify-out/
+
+# Dependencias y salida de build
+node_modules/
+_site/
+
+# Sistema y secretos
+.DS_Store
+Thumbs.db
+desktop.ini
+.env
+.env.*
+*.log
