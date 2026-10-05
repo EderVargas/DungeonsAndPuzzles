@@ -364,7 +364,7 @@ function spiritSteps(actors, who, duration, hooks) {
       onStart() {
         actor.alpha = 0;
         actor.spirit = 0;
-        hooks.onAscend?.();
+        hooks.onAscend?.(who);
         burst(actors, actor.restX, actor.restY - 80, "#fff6d8", 10);
       },
       onUpdate(t) {

@@ -267,7 +267,7 @@ After the impact, the defeated fighter fades. A white, transparent copy of their
 
 The treasure chest opens on the final correct answer. A golden sword rises out of it, and the victory message follows that beat.
 
-Sound cues are short tones synthesized in the browser: a hit, a miss, the spirit rising, and the sword. There are no sampled recordings.
+Sound cues are short tones synthesized in the browser: a hit, a miss, the spirit rising, a trumpet fanfare after the dragon's spirit cue, a descending comic sting when the knight's spirit appears, and the sword. There are no sampled recordings.
 
 The game should use lightweight "juice": hit flash, small particles, shake, squash/stretch or scale changes, and short easing-based transitions where appropriate.
 

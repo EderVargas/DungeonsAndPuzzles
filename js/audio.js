@@ -113,6 +113,22 @@ export function createAudio() {
           { at: 0, freq: 659, duration: 0.22, type: "sine", peak: 0.045, slideTo: 988 },
           { at: 0.14, freq: 880, duration: 0.34, type: "triangle", peak: 0.04, slideTo: 1319 },
         ],
+        // Answers the spirit chime: the first note waits until that cue has finished.
+        fanfare: [
+          { at: 0.5, freq: 523, duration: 0.14, type: "square", peak: 0.03 },
+          { at: 0.5, freq: 1046, duration: 0.14, type: "sine", peak: 0.02 },
+          { at: 0.66, freq: 659, duration: 0.14, type: "square", peak: 0.032 },
+          { at: 0.66, freq: 1319, duration: 0.14, type: "sine", peak: 0.018 },
+          { at: 0.82, freq: 784, duration: 0.16, type: "square", peak: 0.034 },
+          { at: 0.82, freq: 1568, duration: 0.16, type: "sine", peak: 0.016 },
+          { at: 1.02, freq: 1047, duration: 0.5, type: "square", peak: 0.036 },
+          { at: 1.02, freq: 2093, duration: 0.5, type: "sine", peak: 0.014 },
+        ],
+        defeat: [
+          { at: 0, freq: 523, duration: 0.14, type: "triangle", peak: 0.08, slideTo: 392 },
+          { at: 0.22, freq: 440, duration: 0.14, type: "triangle", peak: 0.08, slideTo: 330 },
+          { at: 0.46, freq: 349, duration: 0.95, type: "triangle", peak: 0.09, slideTo: 90 },
+        ],
         sword: [
           { at: 0, freq: 392, duration: 0.12, type: "triangle", peak: 0.05, slideTo: 784 },
           { at: 0.1, freq: 1175, duration: 0.4, type: "sine", peak: 0.05 },

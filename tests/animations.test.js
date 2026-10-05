@@ -62,19 +62,19 @@ test("finish still delivers a pending impact exactly once", () => {
 test("the last heart fades the knight and raises a spirit", () => {
   const actors = createActors({ id: "level-1", type: "combat" });
   let impacts = 0;
-  let ascents = 0;
+  let ascended = null;
   const playback = createFeedback("incorrect", actors, {
     defeated: true,
     onImpact() {
       impacts += 1;
     },
-    onAscend() {
-      ascents += 1;
+    onAscend(who) {
+      ascended = who;
     },
   });
   playback.finish();
   assert.equal(impacts, 1);
-  assert.equal(ascents, 1);
+  assert.equal(ascended, "knight");
   assert.equal(actors.knight.downed, true);
   assert.equal(actors.knight.alpha, 0);
   assert.equal(actors.knight.spirit, 1);
@@ -85,16 +85,16 @@ test("the last heart fades the knight and raises a spirit", () => {
 
 test("felling the dragon raises its spirit before the timeline ends", () => {
   const actors = createActors({ id: "level-1", type: "combat" });
-  let ascents = 0;
+  let ascended = null;
   const playback = createFeedback("correct", actors, {
     felled: true,
     onImpact() {},
-    onAscend() {
-      ascents += 1;
+    onAscend(who) {
+      ascended = who;
     },
   });
   playback.finish();
-  assert.equal(ascents, 1);
+  assert.equal(ascended, "dragon");
   assert.equal(actors.dragon.downed, true);
   assert.equal(actors.dragon.alpha, 0);
   assert.equal(actors.dragon.spirit, 1);

@@ -107,7 +107,14 @@ function onAnswer(optionIndex) {
       revealImpact(round);
       audio.play(correct ? "hit" : "miss");
     },
-    onAscend: () => audio.play("ascend"),
+    onAscend: (who) => {
+      if (who === "knight") {
+        audio.play("defeat");
+        return;
+      }
+      audio.play("ascend");
+      audio.play("fanfare");
+    },
     onSword: () => audio.play("sword"),
   });
 }
