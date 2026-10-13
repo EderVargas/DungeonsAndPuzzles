@@ -103,8 +103,9 @@ export function createUi(doc, onAnswer, onRepeat) {
     dock.hidden = false;
     progress.textContent = `Pregunta ${index + 1}`;
     answers.replaceChildren();
-    const spoken = round.question.spoken;
-    prompt.hidden = Boolean(spoken);
+    const spoken = Boolean(round.question.spoken);
+    dock.classList.toggle("is-spoken", spoken);
+    prompt.hidden = spoken;
     repeatWord.hidden = !spoken;
     dock.setAttribute("aria-labelledby", spoken ? "status" : "prompt");
     repeatWord.disabled = false;
@@ -237,6 +238,7 @@ export function createUi(doc, onAnswer, onRepeat) {
 
   function hideDock() {
     dock.hidden = true;
+    dock.classList.remove("is-spoken");
     repeatWord.hidden = true;
   }
 
