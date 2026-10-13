@@ -17,10 +17,10 @@ Las reglas de las tablas, la vida y el feedback siguen en `GAME_SPEC.md`.
 
 No hace falta leer ni usar el micrófono. La voz pregunta y se responde tocando.
 
-- **Colores.** Rojo, azul, amarillo y verde al principio. Naranja y morado entran después de las dos primeras rondas.
-- **Formas.** Círculo, cuadrado, triángulo y estrella, todas del mismo color en la ronda para que el color no delate la respuesta.
-- **Números.** Del 1 al 5, con el dígito y los puntos para contar.
-- **Vocales.** A, E, I, O, U. Arriba el dibujo y abajo la palabra con la inicial remarcada: Araña, Estrella, Isla, Oso, Uvas.
+- **Colores.** Rojo, azul, amarillo y verde al principio. Naranja y morado entran después de las dos primeras rondas, y la voz los pregunta antes de repetir un color de apertura.
+- **Formas.** Círculo, cuadrado, triángulo y estrella. En una cueva salen las cuatro antes de repetir alguna. Todas van del mismo color en la ronda para que el color no delate la respuesta.
+- **Números.** Del 1 al 5, con el dígito y los puntos para contar. No se repite un número hasta que salieron los cinco.
+- **Vocales.** A, E, I, O, U. No se repite una vocal hasta que salieron las cinco. Arriba el dibujo y abajo la palabra con la inicial remarcada: Araña, Estrella, Isla, Oso, Uvas.
 
 Cada cueva tiene 4 de vida en el dragón y 3 corazones. La bocina repite la pregunta.
 

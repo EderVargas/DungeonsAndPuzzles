@@ -77,6 +77,47 @@ describe("planPrompts", () => {
     assert.ok(seen.has("purple"));
   });
 
+  it("asks each color once, and the new colors before repeating an opening color", () => {
+    const level = getLevel("colors");
+    const core = ["red", "blue", "yellow", "green"];
+    const extra = ["orange", "purple"];
+    for (let seed = 1; seed <= 30; seed += 1) {
+      const rounds = planPrompts(level, createRng(seed), 6);
+      const spoken = rounds.map((round) => round.question.answerId);
+      assert.equal(new Set(spoken).size, 6, `seed ${seed} repeated a color`);
+      assert.ok(core.includes(spoken[0]));
+      assert.ok(core.includes(spoken[1]));
+      assert.notEqual(spoken[0], spoken[1]);
+      assert.deepEqual(spoken.slice(2, 4).slice().sort(), extra.slice().sort());
+    }
+  });
+
+  it("asks every shape once before any shape is spoken again", () => {
+    const level = getLevel("shapes");
+    const ids = level.pool.map((item) => item.id);
+    for (let seed = 1; seed <= 30; seed += 1) {
+      const rounds = planPrompts(level, createRng(seed), 6);
+      const spoken = rounds.map((round) => round.question.answerId);
+      assert.deepEqual(spoken.slice(0, 4).slice().sort(), ids.slice().sort());
+      assert.ok(ids.includes(spoken[4]));
+      assert.ok(ids.includes(spoken[5]));
+      assert.notEqual(spoken[4], spoken[3]);
+    }
+  });
+
+  for (const id of ["numbers", "vowels"]) {
+    it(`${id} speaks every item once before repeating`, () => {
+      const level = getLevel(id);
+      const ids = level.pool.map((item) => item.id);
+      for (let seed = 1; seed <= 30; seed += 1) {
+        const rounds = planPrompts(level, createRng(seed), 6);
+        const spoken = rounds.map((round) => round.question.answerId);
+        assert.deepEqual(spoken.slice(0, ids.length).slice().sort(), ids.slice().sort());
+        assert.notEqual(spoken[ids.length], spoken[ids.length - 1]);
+      }
+    });
+  }
+
   it("paints every shape in a round with the same ink", () => {
     const level = getLevel("shapes");
     const rounds = planPrompts(level, createRng(8), 4);

@@ -82,6 +82,7 @@ LEVELS.forEach(validateLevel);
 
 /**
  * The preschool path listens and touches. Each cave is one idea.
+ * A spoken prompt is not repeated until every item in that cave has been asked.
  * Colors open on four stains; orange and purple join after the warm-up rounds.
  * Red and green both stay in the lesson. An adult nearby can tell them apart.
  */
