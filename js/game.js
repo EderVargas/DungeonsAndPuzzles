@@ -17,6 +17,7 @@ const voice = createVoice(globalThis, {
 
 const ui = createUi(document, onAnswer, () => voice.repeat());
 ui.bindSound(audio);
+ui.bindInfo();
 const renderer = createRenderer(document.getElementById("scene"));
 const stage = document.getElementById("stage");
 
@@ -46,6 +47,9 @@ document.addEventListener("keydown", (event) => {
   audio.unlock();
   onKeyDown(event);
 });
+document.addEventListener("visibilitychange", syncBackgroundAudio);
+window.addEventListener("blur", () => audio.holdForBackground());
+window.addEventListener("focus", syncBackgroundAudio);
 requestAnimationFrame(frame);
 
 function showTitle() {
@@ -87,19 +91,22 @@ function showIntro(nextLevel, hearts = nextLevel.playerHearts) {
     kicker: level.type === "treasure" ? "Desafío final" : "Nueva cueva",
     title: level.name,
     body: introBody(level, heartsLabel),
-    action: level.prompt ? "Entrar" : level.type === "treasure" ? "Abrir el desafío" : "Comenzar",
+    action: level.type === "treasure" ? "Abrir el cofre" : level.prompt ? "Entrar" : "Comenzar",
     onAction: beginMatch,
   });
 }
 
 function introBody(level, heartsLabel) {
+  if (level.type === "treasure") {
+    const task = level.prompt
+      ? "Escucha y toca lo que oyes."
+      : `Tablas ${level.tables.join(", ")}.`;
+    return `${task} El cofre cede con ${level.dragonHp} aciertos. Llevas ${heartsLabel}.`;
+  }
   if (level.prompt) {
     return `Escucha y toca lo que oyes. El dragón tiene ${level.dragonHp} de vida. Llevas ${heartsLabel}.`;
   }
-  const tables = level.tables.join(", ");
-  return level.type === "treasure"
-    ? `Tablas ${tables}. El cofre cede con ${level.dragonHp} aciertos. Llevas ${heartsLabel}.`
-    : `Tablas ${tables}. El dragón tiene ${level.dragonHp} de vida. Llevas ${heartsLabel}.`;
+  return `Tablas ${level.tables.join(", ")}. El dragón tiene ${level.dragonHp} de vida. Llevas ${heartsLabel}.`;
 }
 
 function beginMatch() {
@@ -218,7 +225,7 @@ function showGameOver() {
   voice.stop();
   bindOverlay({
     kicker: "Intento terminado",
-    title: "El dragón sigue despierto",
+    title: level.type === "treasure" ? "El cofre sigue cerrado" : "El dragón sigue despierto",
     body: "Te quedaste sin corazones. Puedes volver a intentarlo.",
     action: "Reintentar",
     onAction: () => showIntro(level),
@@ -229,16 +236,27 @@ function showVictory() {
   screen = "victory";
   ui.hideDock();
   voice.stop();
-  const gael = character?.id === "gael";
   bindOverlay({
-    kicker: "Tesoro",
-    title: gael ? "La cueva queda en calma" : "El cofre se abre",
-    body: gael
-      ? "Colores, formas, números y vocales quedaron contigo."
-      : "Las tablas 9 y 10 quedaron contigo.",
-    action: "Elegir caballero",
-    onAction: showTitle,
+    kicker: "¡Lo lograste!",
+    title: "Ganaste la espada mística",
+    body: "El cofre se abrió. La espada queda contigo.",
+    action: "Otra vez",
+    actionIcon: "again",
+    onAction: () => showIntro(levelsFor(character.id)[0]),
+    secondary: {
+      label: "Cambiar personaje",
+      icon: "person",
+      onAction: showTitle,
+    },
   });
+}
+
+function syncBackgroundAudio() {
+  if (document.hidden) {
+    audio.holdForBackground();
+    return;
+  }
+  audio.releaseFromBackground();
 }
 
 function nextLevel(id) {
@@ -252,7 +270,7 @@ function bindOverlay(view) {
 }
 
 function onKeyDown(event) {
-  if (!document.getElementById("overlay").hidden) {
+  if (!document.getElementById("overlay").hidden || !document.getElementById("info-modal").hidden) {
     return;
   }
   if (screen !== "match" || playback) {

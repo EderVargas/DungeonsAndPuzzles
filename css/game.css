@@ -94,7 +94,7 @@ body {
   align-items: flex-end;
   gap: 16px;
   flex-wrap: wrap;
-  padding-right: 52px;
+  padding-right: 108px;
 }
 
 .eyebrow {
@@ -315,7 +315,9 @@ h1 {
 }
 
 .answer,
-#overlay-action {
+#overlay-action,
+#overlay-secondary,
+#info-close {
   min-height: 56px;
   border: 3px solid rgba(240, 193, 74, 0.28);
   border-radius: 16px;
@@ -338,7 +340,9 @@ h1 {
 }
 
 .answer:focus-visible,
-#overlay-action:focus-visible {
+#overlay-action:focus-visible,
+#overlay-secondary:focus-visible,
+#info-close:focus-visible {
   outline: 3px solid var(--gold);
   outline-offset: 3px;
 }
@@ -442,11 +446,22 @@ h1 {
   opacity: 0.62;
 }
 
-.sound-toggle {
+.corner-tools {
   position: fixed;
-  z-index: 2;
+  z-index: 3;
   top: calc(12px + var(--safe-top));
   right: calc(16px + var(--safe-right));
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: flex-start;
+  gap: 8px;
+  width: auto;
+  pointer-events: none;
+}
+
+.sound-toggle,
+.info-toggle {
+  pointer-events: auto;
   width: 44px;
   height: 44px;
   display: grid;
@@ -456,6 +471,8 @@ h1 {
   background: var(--panel);
   color: var(--gold);
   font-size: 1.35rem;
+  font-weight: 800;
+  font-family: Georgia, serif;
   line-height: 1;
   cursor: pointer;
   box-shadow: var(--shadow);
@@ -471,9 +488,81 @@ h1 {
   text-decoration: line-through;
 }
 
-.sound-toggle:focus-visible {
+.sound-toggle:focus-visible,
+.info-toggle:focus-visible {
   outline: 3px solid var(--gold);
   outline-offset: 3px;
+}
+
+.overlay.credit-modal {
+  z-index: 5;
+}
+
+.credit-card {
+  width: min(420px, 100%);
+}
+
+.credit-heart {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 4px;
+  color: var(--heart);
+  filter: drop-shadow(0 8px 14px rgba(232, 93, 117, 0.4));
+  animation: credit-beat 1.5s ease-in-out infinite;
+}
+
+.credit-heart svg,
+.inline-heart svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.credit-card .credit-line {
+  margin: 8px 0 0;
+  color: var(--ink);
+  font-size: clamp(1.15rem, 3vw, 1.35rem);
+  line-height: 1.45;
+}
+
+.inline-heart {
+  display: inline-block;
+  width: 1.05em;
+  height: 1.05em;
+  margin: 0 0.15em;
+  color: var(--heart);
+  vertical-align: -0.16em;
+}
+
+.credit-card .credit-sign {
+  margin: 14px 0 0;
+  color: var(--gold);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
+}
+
+#info-close {
+  width: 100%;
+  margin-top: 18px;
+  background: var(--gold);
+  color: var(--gold-ink);
+}
+
+@keyframes credit-beat {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .credit-heart {
+    animation: none;
+  }
 }
 
 .overlay {
@@ -520,11 +609,42 @@ h1 {
   line-height: 1.45;
 }
 
-#overlay-action {
+.overlay-actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+#overlay-action,
+#overlay-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   width: 100%;
-  margin-top: 8px;
+  margin-top: 0;
+}
+
+#overlay-action {
   background: var(--gold);
   color: var(--gold-ink);
+}
+
+#overlay-secondary {
+  background: transparent;
+  color: var(--ink);
+}
+
+.btn-icon {
+  width: 1.15em;
+  height: 1.15em;
+  display: inline-flex;
+}
+
+.btn-icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 @media (max-width: 700px) {

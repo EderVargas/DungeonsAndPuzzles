@@ -134,4 +134,47 @@ describe("music under a spoken question", () => {
     assert.equal(created[0].paused, true);
     voice.stop();
   });
+
+  it("pauses when the page is hidden and resumes from the same place", () => {
+    installBrowser();
+    const audio = createAudio();
+    audio.unlock();
+    const song = created[0];
+    assert.equal(song.paused, false);
+
+    audio.holdForBackground();
+    assert.equal(song.paused, true);
+
+    audio.releaseFromBackground();
+    assert.equal(song.paused, false);
+    assert.equal(song.volume, MUSIC_VOLUME);
+  });
+
+  it("stays quiet in the background while muted or while a question is speaking", () => {
+    installBrowser();
+    const audio = createAudio();
+    audio.unlock();
+    audio.pauseForVoice();
+    audio.holdForBackground();
+    audio.resumeAfterVoice();
+    assert.equal(created[0].paused, true);
+
+    audio.releaseFromBackground();
+    assert.equal(created[0].paused, false);
+
+    audio.toggleMuted();
+    audio.holdForBackground();
+    audio.releaseFromBackground();
+    assert.equal(created[0].paused, true);
+  });
+
+  it("does not start the track until the page is visible again", () => {
+    installBrowser();
+    const audio = createAudio();
+    audio.holdForBackground();
+    audio.unlock();
+    assert.equal(created[0].paused, true);
+    audio.releaseFromBackground();
+    assert.equal(created[0].paused, false);
+  });
 });

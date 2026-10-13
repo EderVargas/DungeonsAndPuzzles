@@ -85,6 +85,7 @@ LEVELS.forEach(validateLevel);
  * A spoken prompt is not repeated until every item in that cave has been asked.
  * Colors open on four stains; orange and purple join after the warm-up rounds.
  * Red and green both stay in the lesson. An adult nearby can tell them apart.
+ * The last cave is a chest, same as the tables path: hits open it and the sword rises.
  */
 export const GAEL_LEVELS = [
   {
@@ -146,7 +147,7 @@ export const GAEL_LEVELS = [
   {
     id: "vowels",
     name: "Las vocales",
-    type: "combat",
+    type: "treasure",
     prompt: "vowel",
     optionCount: 4,
     playerHearts: 3,

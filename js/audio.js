@@ -13,6 +13,7 @@ export function createAudio() {
   let music = null;
   let muted = readMuted();
   let heldByVoice = false;
+  let away = false;
 
   function audio() {
     const AudioCtx = globalThis.AudioContext || globalThis.webkitAudioContext;
@@ -61,7 +62,7 @@ export function createAudio() {
     const song = track();
     song.volume = MUSIC_VOLUME;
     song.muted = muted;
-    if (muted || heldByVoice) {
+    if (muted || heldByVoice || away) {
       return;
     }
     const pending = song.play();
@@ -116,6 +117,17 @@ export function createAudio() {
       }
       heldByVoice = false;
       if (!muted) {
+        startMusic();
+      }
+    },
+    /** Tab hidden, window minimized, phone locked, or another window in front. */
+    holdForBackground() {
+      away = true;
+      music?.pause();
+    },
+    releaseFromBackground() {
+      away = false;
+      if (music && !muted && !heldByVoice) {
         startMusic();
       }
     },

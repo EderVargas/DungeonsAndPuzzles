@@ -29,6 +29,11 @@ export function createUi(doc, onAnswer, onRepeat) {
   const overlayTitle = doc.getElementById("overlay-title");
   const overlayBody = doc.getElementById("overlay-body");
   const overlayAction = doc.getElementById("overlay-action");
+  const overlaySecondary = doc.getElementById("overlay-secondary");
+  const cornerTools = doc.querySelector(".corner-tools");
+  const infoToggle = doc.getElementById("info-toggle");
+  const infoModal = doc.getElementById("info-modal");
+  const infoClose = doc.getElementById("info-close");
 
   let shownHearts = null;
   let shownHp = null;
@@ -220,20 +225,36 @@ export function createUi(doc, onAnswer, onRepeat) {
     status.textContent = text;
   }
 
-  function showOverlay({ kicker, title, body, action, onAction }) {
+  function showOverlay({ kicker, title, body, action, actionIcon, onAction, secondary }) {
     overlayKicker.textContent = kicker;
     overlayTitle.textContent = title;
     overlayBody.textContent = body;
-    overlayAction.textContent = action;
+    paintAction(overlayAction, action, actionIcon);
     overlayAction.onclick = onAction;
+    if (secondary) {
+      overlaySecondary.hidden = false;
+      paintAction(overlaySecondary, secondary.label, secondary.icon);
+      overlaySecondary.onclick = secondary.onAction;
+    } else {
+      overlaySecondary.hidden = true;
+      overlaySecondary.onclick = null;
+    }
     overlay.hidden = false;
-    app.inert = true;
-    overlayAction.focus();
+    overlay.inert = !infoModal.hidden;
+    syncInert();
+    if (infoModal.hidden) {
+      overlayAction.focus();
+    }
   }
 
   function hideOverlay() {
     overlay.hidden = true;
-    app.inert = false;
+    overlay.inert = false;
+    syncInert();
+  }
+
+  function syncInert() {
+    app.inert = !overlay.hidden || !infoModal.hidden;
   }
 
   function hideDock() {
@@ -302,9 +323,44 @@ export function createUi(doc, onAnswer, onRepeat) {
     paint();
   }
 
+  function bindInfo() {
+    function setOpen(open) {
+      infoModal.hidden = !open;
+      infoToggle.setAttribute("aria-expanded", open ? "true" : "false");
+      cornerTools.inert = open;
+      overlay.inert = open && !overlay.hidden;
+      syncInert();
+      if (open) {
+        infoClose.focus();
+      }
+    }
+
+    function closeInfo() {
+      setOpen(false);
+      infoToggle.focus();
+    }
+
+    infoToggle.addEventListener("click", () => {
+      setOpen(infoModal.hidden);
+    });
+    infoClose.addEventListener("click", closeInfo);
+    infoModal.addEventListener("click", (event) => {
+      if (event.target === infoModal) {
+        closeInfo();
+      }
+    });
+    doc.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !infoModal.hidden) {
+        event.preventDefault();
+        closeInfo();
+      }
+    });
+  }
+
   return {
     answers,
     bindSound,
+    bindInfo,
     setHeading,
     setLevel,
     showHud,
@@ -320,6 +376,27 @@ export function createUi(doc, onAnswer, onRepeat) {
     hideDock,
   };
 }
+
+function paintAction(button, label, icon) {
+  button.replaceChildren();
+  if (icon) {
+    const glyph = button.ownerDocument.createElement("span");
+    glyph.className = "btn-icon";
+    glyph.setAttribute("aria-hidden", "true");
+    glyph.innerHTML = ICONS[icon] ?? "";
+    button.append(glyph);
+  }
+  const text = button.ownerDocument.createElement("span");
+  text.textContent = label;
+  button.append(text);
+}
+
+const ICONS = {
+  again:
+    '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 5.2A6.8 6.8 0 0 1 18.6 10H16v2.2h6.2V6h-2.2v2.1A9 9 0 1 0 21 13h-2.2A6.8 6.8 0 1 1 12 5.2z"/></svg>',
+  person:
+    '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.1" fill="currentColor"/><path fill="currentColor" d="M6.6 19.1c.7-2.9 2.8-4.5 5.4-4.5s4.7 1.6 5.4 4.5c.2.6-.3 1.2-.9 1.2H7.5c-.6 0-1.1-.6-.9-1.2z"/></svg>',
+};
 
 function mark(button, symbol) {
   const slot = button.querySelector(".mark");

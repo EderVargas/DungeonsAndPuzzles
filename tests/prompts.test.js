@@ -173,5 +173,7 @@ describe("gael match", () => {
       levelsFor("gael").map((item) => item.id),
       ["colors", "shapes", "numbers", "vowels"],
     );
+    assert.equal(getLevel("vowels").type, "treasure");
+    assert.equal(getLevel("treasure").type, "treasure");
   });
 });

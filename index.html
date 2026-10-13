@@ -59,13 +59,55 @@
         <p class="eyebrow" id="overlay-kicker">Aventura</p>
         <h2 id="overlay-title">Dungeons & Puzzles</h2>
         <p id="overlay-body">Elige un caballero y entra a la cueva.</p>
-        <button type="button" id="overlay-action">Entrar a la cueva</button>
+        <div class="overlay-actions">
+          <button type="button" id="overlay-action">Entrar a la cueva</button>
+          <button type="button" id="overlay-secondary" hidden>Cambiar personaje</button>
+        </div>
       </div>
     </div>
 
-    <button type="button" id="sound-toggle" class="sound-toggle" aria-pressed="false" aria-label="Silenciar sonido">
-      <span class="sound-glyph" aria-hidden="true">♪</span>
-    </button>
+    <div class="corner-tools">
+      <button type="button" id="sound-toggle" class="sound-toggle" aria-pressed="false" aria-label="Silenciar sonido">
+        <span class="sound-glyph" aria-hidden="true">♪</span>
+      </button>
+      <button
+        type="button"
+        id="info-toggle"
+        class="info-toggle"
+        aria-expanded="false"
+        aria-controls="info-modal"
+        aria-label="Información"
+      >
+        <span aria-hidden="true">i</span>
+      </button>
+    </div>
+
+    <div id="info-modal" class="overlay credit-modal" role="dialog" aria-modal="true" aria-labelledby="info-title" hidden>
+      <div class="card credit-card">
+        <div class="credit-heart" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path
+              fill="currentColor"
+              d="M12 21.2c-.3 0-.6-.1-.8-.3C10.2 20 2.5 14.2 2.5 9.2 2.5 6.3 4.8 4 7.6 4c1.6 0 3.1.7 4.4 2.1C13.3 4.7 14.8 4 16.4 4c2.8 0 5.1 2.3 5.1 5.2 0 5-7.7 10.8-8.7 11.7-.2.2-.5.3-.8.3z"
+            />
+          </svg>
+        </div>
+        <p id="info-title" class="credit-line">
+          Realizado con amor
+          <span class="inline-heart" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <path
+                fill="currentColor"
+                d="M12 21.2c-.3 0-.6-.1-.8-.3C10.2 20 2.5 14.2 2.5 9.2 2.5 6.3 4.8 4 7.6 4c1.6 0 3.1.7 4.4 2.1C13.3 4.7 14.8 4 16.4 4c2.8 0 5.1 2.3 5.1 5.2 0 5-7.7 10.8-8.7 11.7-.2.2-.5.3-.8.3z"
+              />
+            </svg>
+          </span>
+          para el desarrollo de mis hijos.
+        </p>
+        <p class="credit-sign">2026 — EGLG</p>
+        <button type="button" id="info-close">Cerrar</button>
+      </div>
+    </div>
 
     <script type="module" src="js/game.js"></script>
   </body>
