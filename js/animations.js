@@ -21,13 +21,77 @@ export function lerp(from, to, t) {
   return from + (to - from) * t;
 }
 
+const KNIGHT_DRAW = 1.38;
+const SWORD_PIVOT_X = 22;
+const SWORD_PIVOT_Y = -34;
+const SWORD_TIP = 46;
+const SWORD_REST = 0.55;
+const SWORD_ARC = 1.65;
+const STRIKE_SX = 0.92;
+const STRIKE_SY = 1.12;
+
+export function swordAngle(swing = 0) {
+  return SWORD_REST + swing * SWORD_ARC;
+}
+
+function drawScale(knight) {
+  return KNIGHT_DRAW * (knight.look?.scale ?? 1);
+}
+
+export function swordTip(knight) {
+  const angle = swordAngle(knight.swing ?? 0);
+  const scaleX = (knight.sx ?? 1) * drawScale(knight);
+  const scaleY = (knight.sy ?? 1) * drawScale(knight);
+  const localX = SWORD_PIVOT_X + SWORD_TIP * Math.sin(angle);
+  const localY = SWORD_PIVOT_Y - SWORD_TIP * Math.cos(angle);
+  const body = (knight.yield ?? 0) * 0.22;
+  const scaledX = localX * scaleX;
+  const scaledY = localY * scaleY;
+  const cos = Math.cos(body);
+  const sin = Math.sin(body);
+  return {
+    x: knight.x + scaledX * cos - scaledY * sin,
+    y: knight.y + scaledX * sin + scaledY * cos,
+  };
+}
+
+function flankOf(dragon) {
+  const localX = -48 * dragon.scale;
+  const localY = 6 * dragon.scale;
+  const tilt = 0.22;
+  const cos = Math.cos(tilt);
+  const sin = Math.sin(tilt);
+  return {
+    x: dragon.restX + localX * cos - localY * sin,
+    y: dragon.restY + localX * sin + localY * cos,
+  };
+}
+
+function strikePose(knight, dragon) {
+  const flank = flankOf(dragon);
+  const draw = drawScale(knight);
+  const scaleY = STRIKE_SY * draw;
+  const neededLocalY = (flank.y - knight.restY) / scaleY;
+  const cos = Math.max(-1, Math.min(1, (SWORD_PIVOT_Y - neededLocalY) / SWORD_TIP));
+  const angle = Math.acos(cos);
+  const localX = SWORD_PIVOT_X + SWORD_TIP * Math.sin(angle);
+  return {
+    x: flank.x - localX * STRIKE_SX * draw,
+    swing: (angle - SWORD_REST) / SWORD_ARC,
+  };
+}
+
 const DRAGON_TINT = {
   "level-1": "#6fbf73",
   "level-2": "#4aa3c7",
   "level-3": "#e08a62",
+  colors: "#c98adf",
+  shapes: "#4aa3c7",
+  numbers: "#6fbf73",
+  vowels: "#f0c14a",
 };
 
-export function createActors(level) {
+export function createActors(level, character = null) {
   const dragonScale = level.id === "level-1" ? 1.08 : level.id === "level-3" ? 1.5 : 1.28;
   const dragonY = 468 - 78 * dragonScale;
   return {
@@ -46,9 +110,19 @@ export function createActors(level) {
       sy: 1,
       flash: 0,
       yield: 0,
+      swing: 0,
+      hurt: 0,
       alpha: 1,
       spirit: 0,
       downed: false,
+      look: character
+        ? {
+            hair: character.hair,
+            armor: character.armor,
+            armorLight: character.armorLight,
+            scale: character.scale,
+          }
+        : null,
     },
     dragon: {
       x: 710,
@@ -64,9 +138,13 @@ export function createActors(level) {
       downed: false,
       tint: DRAGON_TINT[level.id] ?? "#6fbf73",
       sleepy: false,
+      hurt: 0,
+      flap: 0,
+      bite: 0,
+      breath: 0,
     },
     chest: { x: 700, y: 400, sx: 1, sy: 1, open: 0, openTarget: 0, flash: 0, sword: 0 },
-    slash: { x: 560, y: 300, life: 0 },
+    slash: { x: 560, y: 300, life: 0, angle: -0.6 },
     particles: [],
   };
 }
@@ -119,8 +197,11 @@ export function tickAmbient(actors, dt) {
       knight.y = knight.restY;
       knight.sx = 1;
       knight.sy = 1;
+      knight.swing = 0;
     } else {
       knight.yield = 0;
+      knight.swing = 0;
+      knight.hurt = 0;
       knight.y = knight.restY + Math.sin(actors.time / 320) * 5;
       knight.sx = 1;
       knight.sy = 1;
@@ -132,10 +213,18 @@ export function tickAmbient(actors, dt) {
       dragon.x = dragon.restX;
       dragon.sx = 1;
       dragon.sy = 1;
+      dragon.flap = 0;
+      dragon.bite = 0;
+      dragon.breath = 0;
     } else {
+      const idle = wingIdle(actors.levelId, actors.time);
       dragon.x = dragon.restX;
+      dragon.hurt = 0;
+      dragon.bite = 0;
+      dragon.breath = 0;
+      dragon.flap = idle.flap;
       dragon.sx = 1;
-      dragon.sy = 1 + Math.sin(actors.time / 380) * 0.04;
+      dragon.sy = 1 + idle.breath * 0.045;
     }
     actors.chest.sx = 1;
     actors.chest.sy = 1;
@@ -209,52 +298,80 @@ function combatSteps(kind, actors, hooks, duration) {
   const correct = kind === "correct";
 
   if (correct) {
+    const strike = strikePose(knight, dragon);
+    const windup = -0.42;
+    const follow = strike.swing + 0.2;
     const steps = [
       {
-        duration: duration(140),
+        duration: duration(160),
         ease: easeOutBack,
         onUpdate(t) {
           knight.sx = lerp(1, 1.16, t);
           knight.sy = lerp(1, 0.84, t);
-          knight.x = lerp(knight.restX, knight.restX - 18, t);
+          knight.x = lerp(knight.restX, knight.restX - 22, t);
+          knight.swing = lerp(0, windup, t);
         },
       },
       {
-        duration: duration(150),
+        duration: duration(130),
         ease: easeInCubic,
         onUpdate(t) {
-          knight.x = lerp(knight.restX - 18, knight.restX + 150, t);
-          knight.sx = lerp(1.16, 0.92, t);
-          knight.sy = lerp(0.84, 1.12, t);
+          knight.x = lerp(knight.restX - 22, strike.x, t);
+          knight.sx = lerp(1.16, STRIKE_SX, t);
+          knight.sy = lerp(0.84, STRIKE_SY, t);
+          knight.swing = lerp(windup, strike.swing, t);
         },
       },
       {
-        duration: duration(70),
+        duration: duration(40),
         onStart() {
-          strike(actors, true);
+          knight.x = strike.x;
+          knight.sx = STRIKE_SX;
+          knight.sy = STRIKE_SY;
+          knight.swing = strike.swing;
+          landStrike(actors, true);
           hooks.onImpact?.();
         },
       },
       {
-        duration: duration(260),
-        onUpdate(t) {
-          const wave = Math.sin(t * Math.PI);
-          dragon.x = lerp(dragon.restX, dragon.restX + 42, wave);
-          dragon.sx = lerp(1, 1.22, wave);
-          dragon.sy = lerp(1, 0.78, wave);
-          actors.slash.life = 1 - t;
+        duration: duration(220),
+        onUpdate(_t, raw) {
+          const moving = unfreeze(raw, actors, 0.28);
+          if (moving === null) {
+            dragon.hurt = 1;
+            actors.slash.life = 1;
+            return;
+          }
+          const wave = Math.sin(moving * Math.PI);
+          dragon.x = lerp(dragon.restX, dragon.restX + 34, wave);
+          dragon.sx = lerp(1, 1.14, wave);
+          dragon.sy = lerp(1, 0.86, wave);
+          dragon.hurt = 0.72 + 0.28 * wave;
+          knight.swing = lerp(strike.swing, follow, easeOutCubic(Math.min(1, moving * 1.35)));
+          actors.slash.life = 1 - moving * 0.85;
         },
       },
       {
         duration: duration(200),
         ease: easeOutCubic,
         onUpdate(t) {
-          knight.x = lerp(knight.restX + 150, knight.restX, t);
-          knight.sx = lerp(0.92, 1, t);
-          knight.sy = lerp(1.12, 1, t);
+          knight.x = lerp(strike.x, knight.restX, t);
+          knight.sx = lerp(STRIKE_SX, 1, t);
+          knight.sy = lerp(STRIKE_SY, 1, t);
+          knight.swing = lerp(follow, 0, t);
           dragon.x = lerp(dragon.x, dragon.restX, t);
+          dragon.sx = lerp(dragon.sx, 1, t);
+          dragon.sy = lerp(dragon.sy, 1, t);
+          dragon.hurt = lerp(dragon.hurt, 0, t);
         },
         onEnd() {
+          knight.swing = 0;
+          knight.sx = 1;
+          knight.sy = 1;
+          dragon.hurt = 0;
+          dragon.x = dragon.restX;
+          dragon.sx = 1;
+          dragon.sy = 1;
           if (!hooks.felled) {
             actors.posing = false;
           }
@@ -269,37 +386,56 @@ function combatSteps(kind, actors, hooks, duration) {
 
   const steps = [
     {
+      duration: duration(180),
+      ease: easeOutBack,
+      onUpdate(t) {
+        dragon.flap = lerp(0, 1, t);
+        dragon.bite = lerp(0, 1, t);
+        dragon.sx = lerp(1, 1.12, t);
+        dragon.sy = lerp(1, 0.88, t);
+        dragon.x = lerp(dragon.restX, dragon.restX + 22, t);
+      },
+    },
+    {
       duration: duration(140),
       ease: easeInCubic,
       onUpdate(t) {
-        dragon.sx = lerp(1, 1.14, t);
-        dragon.sy = lerp(1, 0.86, t);
-        dragon.x = lerp(dragon.restX, dragon.restX + 16, t);
+        dragon.x = lerp(dragon.restX + 22, dragon.restX - 188, t);
+        dragon.sx = lerp(1.12, 0.9, t);
+        dragon.sy = lerp(0.88, 1.1, t);
+        dragon.flap = lerp(1, -0.35, t);
+        dragon.bite = 1;
+        dragon.breath = t;
       },
     },
     {
-      duration: duration(150),
-      ease: easeInCubic,
-      onUpdate(t) {
-        dragon.x = lerp(dragon.restX + 16, dragon.restX - 150, t);
-        dragon.sx = lerp(1.14, 0.9, t);
-        dragon.sy = lerp(0.86, 1.1, t);
-      },
-    },
-    {
-      duration: duration(60),
+      duration: duration(40),
       onStart() {
-        strike(actors, false);
+        dragon.breath = 1;
+        knight.hurt = 1;
+        landStrike(actors, false);
         hooks.onImpact?.();
       },
     },
     {
       duration: duration(240),
-      onUpdate(t) {
-        const wave = Math.sin(t * Math.PI);
-        knight.x = lerp(knight.restX, knight.restX - 28, wave);
-        knight.sx = lerp(1, 1.18, wave);
-        knight.sy = lerp(1, 0.8, wave);
+      onUpdate(_t, raw) {
+        const moving = unfreeze(raw, actors, 0.25);
+        if (moving === null) {
+          knight.hurt = 1;
+          knight.x = knight.restX;
+          return;
+        }
+        const wave = Math.sin(moving * Math.PI);
+        knight.x = lerp(knight.restX, knight.restX - 36, wave);
+        knight.sx = lerp(1, 1.16, wave);
+        knight.sy = lerp(1, 0.82, wave);
+        knight.yield = wave * 0.9;
+        knight.hurt = 0.72 + 0.28 * wave;
+        dragon.x = lerp(dragon.restX - 188, dragon.restX - 36, easeOutCubic(moving));
+        dragon.breath = 1 - moving;
+        dragon.bite = 1 - moving;
+        dragon.flap = lerp(-0.35, 0, moving);
       },
     },
   ];
@@ -317,15 +453,30 @@ function recoverSteps(actors, duration) {
   return {
     duration: duration(200),
     ease: easeOutCubic,
+    onStart() {
+      knight.hurtFrom = knight.hurt;
+      knight.yieldFrom = knight.yield;
+    },
     onUpdate(t) {
-      dragon.x = lerp(dragon.restX - 150, dragon.restX, t);
+      dragon.x = lerp(dragon.restX - 36, dragon.restX, t);
       dragon.sx = 1;
       dragon.sy = 1;
+      dragon.flap = lerp(dragon.flap, 0, t);
+      dragon.bite = lerp(dragon.bite, 0, t);
+      dragon.breath = lerp(dragon.breath, 0, t);
       knight.x = lerp(knight.x, knight.restX, t);
       knight.sx = 1;
       knight.sy = 1;
+      knight.hurt = lerp(knight.hurtFrom ?? 0, 0, t);
+      knight.yield = lerp(knight.yieldFrom ?? 0, 0, t);
     },
     onEnd() {
+      knight.hurt = 0;
+      knight.yield = 0;
+      dragon.flap = 0;
+      dragon.bite = 0;
+      dragon.breath = 0;
+      dragon.x = dragon.restX;
       actors.posing = false;
     },
   };
@@ -353,9 +504,15 @@ function spiritSteps(actors, who, duration, hooks) {
         actor.y = lerp(actor.fromY, actor.restY, t);
         actor.sx = lerp(actor.fromSx, 1, t);
         actor.sy = lerp(actor.fromSy, 1, t);
+        actor.hurt = lerp(actor.hurt ?? 0, 0, t);
+        actor.yield = lerp(actor.yield ?? 0, 0, t);
         other.x = lerp(other.fromX, other.restX, t);
         other.sx = lerp(other.fromSx, 1, t);
         other.sy = lerp(other.fromSy, 1, t);
+        other.flap = lerp(other.flap ?? 0, 0, t);
+        other.bite = lerp(other.bite ?? 0, 0, t);
+        other.breath = lerp(other.breath ?? 0, 0, t);
+        other.hurt = lerp(other.hurt ?? 0, 0, t);
       },
     },
     {
@@ -451,7 +608,10 @@ function treasureSteps(kind, actors, hooks, duration) {
     {
       duration: duration(220),
       ease: easeOutCubic,
-      onUpdate(t) {
+      onUpdate(t, raw) {
+        if (unfreeze(raw, actors, 0.28) === null) {
+          return;
+        }
         chest.sx = lerp(chest.sx, 1, t);
         chest.sy = lerp(chest.sy, 1, t);
         chest.x = lerp(chest.x, 700, t);
@@ -471,16 +631,19 @@ function treasureSteps(kind, actors, hooks, duration) {
   return steps;
 }
 
-function strike(actors, correct) {
+function landStrike(actors, correct) {
   if (!actors.reduced) {
     actors.trauma = Math.min(1, actors.trauma + (correct ? 0.42 : 0.28));
   }
   if (correct) {
+    const tip = swordTip(actors.knight);
     actors.dragon.flash = 1;
+    actors.dragon.hurt = 1;
     actors.slash.life = 1;
-    actors.slash.x = actors.dragon.restX - 70;
-    actors.slash.y = actors.dragon.restY - 10;
-    burst(actors, actors.slash.x, actors.slash.y, "#ffe7a3");
+    actors.slash.x = tip.x;
+    actors.slash.y = tip.y;
+    actors.slash.angle = swordAngle(actors.knight.swing ?? 0);
+    burst(actors, tip.x, tip.y, "#ffe7a3");
     return;
   }
   actors.knight.flash = 1;
@@ -502,6 +665,29 @@ function burst(actors, x, y, color, count = actors.reduced ? 4 : 8) {
       shape: i % 2 === 0 ? "star" : "dot",
     });
   }
+}
+
+function wingIdle(levelId, time) {
+  const tune =
+    levelId === "level-3"
+      ? { period: 460, amp: 0.38 }
+      : levelId === "level-2"
+        ? { period: 680, amp: 0.26 }
+        : { period: 980, amp: 0.16 };
+  return {
+    flap: Math.sin(time / tune.period) * tune.amp,
+    breath: Math.sin(time / 380),
+  };
+}
+
+function unfreeze(raw, actors, portion) {
+  if (actors.reduced || portion <= 0) {
+    return raw;
+  }
+  if (raw < portion) {
+    return null;
+  }
+  return (raw - portion) / (1 - portion);
 }
 
 function fade(actor, seconds) {

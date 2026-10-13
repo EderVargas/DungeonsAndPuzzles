@@ -1,6 +1,7 @@
 import { createOptions } from "./answers.js";
 import { applyAnswer, createCombat } from "./combat.js";
 import { questionBudget } from "./levels.js";
+import { planPrompts } from "./prompts.js";
 import { planQuestions } from "./questions.js";
 
 /**
@@ -11,12 +12,13 @@ import { planQuestions } from "./questions.js";
  */
 export function startMatch(level, rng, hearts = level.playerHearts) {
   const playerHearts = Math.min(level.playerHearts, hearts);
-  const rounds = planQuestions(level, rng, questionBudget(level, playerHearts)).map(
-    (question) => ({
-      question,
-      options: createOptions(question, level, rng),
-    }),
-  );
+  const budget = questionBudget(level, playerHearts);
+  const rounds = level.prompt
+    ? planPrompts(level, rng, budget)
+    : planQuestions(level, rng, budget).map((question) => ({
+        question,
+        options: createOptions(question, level, rng),
+      }));
 
   return {
     levelId: level.id,
@@ -49,8 +51,10 @@ export function submitAnswer(match, optionIndex) {
     throw new Error(`Invalid option index: ${optionIndex}`);
   }
 
-  const selectedValue = round.options[optionIndex];
-  const correct = selectedValue === round.question.product;
+  const selected = round.options[optionIndex];
+  const selectedValue = selected && typeof selected === "object" ? selected.id : selected;
+  const correctValue = round.question.answerId ?? round.question.product;
+  const correct = selectedValue === correctValue;
   const combat = applyAnswer(match.combat, correct);
 
   return {
@@ -61,7 +65,7 @@ export function submitAnswer(match, optionIndex) {
       correct,
       optionIndex,
       selectedValue,
-      correctValue: round.question.product,
+      correctValue,
       questionIndex: match.index,
       outcome: combat.outcome,
     },

@@ -1,10 +1,12 @@
 # DungeonsAndPuzzles - Game Specification
 
+Este documento cubre el camino de las tablas de multiplicar. El juego también tiene un camino de 3 a 4 años, con preguntas habladas. La referencia actual de los dos está en [docs/referencia.md](docs/referencia.md).
+
 ## 1. Project identity
 
 **Name:** DungeonsAndPuzzles
 **Type:** Educational browser game / fantasy puzzle combat
-**Target:** Children learning multiplication tables
+**Target:** 7-8 years old, learning multiplication tables. The preschool path is documented in `docs/referencia.md`.
 **Technology:** HTML5 + CSS3 + vanilla JavaScript
 **Rendering:** HTML/CSS UI plus HTML5 Canvas for the game scene and combat animation
 **Frameworks:** None for the initial version

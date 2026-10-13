@@ -1,19 +1,26 @@
 import { createAudio } from "./audio.js";
 import { createFeedback, createActors, shakeOffset, tickAmbient } from "./animations.js";
+import { CHARACTERS, getCharacter } from "./characters.js";
 import { acknowledgeFeedback, currentRound, startMatch, submitAnswer } from "./game-state.js";
-import { LEVELS, getLevel } from "./levels.js";
+import { getLevel, levelsFor } from "./levels.js";
 import { createRenderer } from "./renderer.js";
 import { createRng } from "./rng.js";
 import { createUi } from "./ui.js";
+import { createVoice } from "./voice.js";
 
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const audio = createAudio();
+const voice = createVoice(globalThis, {
+  onSpeakStart: () => audio.pauseForVoice(),
+  onSpeakEnd: () => audio.resumeAfterVoice(),
+});
 
-const ui = createUi(document, onAnswer);
+const ui = createUi(document, onAnswer, () => voice.repeat());
 ui.bindSound(audio);
 const renderer = createRenderer(document.getElementById("scene"));
 const stage = document.getElementById("stage");
 
+let character = null;
 let level = getLevel("level-1");
 let carriedHearts = level.playerHearts;
 let actors = createActors(level);
@@ -25,45 +32,74 @@ let screen = "title";
 let lastFrame = 0;
 
 actors.reduced = reducedMotion;
-ui.showHud(false);
-ui.hideDock();
-bindOverlay({
-  kicker: "Aventura",
-  title: "Dungeons & Puzzles",
-  body: "Un caballero, un dragón y las tablas de multiplicar.",
-  action: "Entrar a la cueva",
-  onAction: () => showIntro(getLevel("level-1")),
-});
+showTitle();
 
-new ResizeObserver(() => renderer.resize(stage)).observe(stage);
-document.addEventListener("pointerdown", () => audio.unlock());
+new ResizeObserver(() => {
+  renderer.resize(stage);
+  ui.paintPortraits();
+}).observe(stage);
+document.addEventListener("pointerdown", () => {
+  audio.unlock();
+  voice.prime();
+});
 document.addEventListener("keydown", (event) => {
   audio.unlock();
   onKeyDown(event);
 });
 requestAnimationFrame(frame);
 
+function showTitle() {
+  screen = "title";
+  character = null;
+  level = getLevel("level-1");
+  carriedHearts = level.playerHearts;
+  actors = createActors(level);
+  actors.knight.alpha = 0;
+  actors.dragon.alpha = 0;
+  actors.reduced = reducedMotion;
+  match = null;
+  playback = null;
+  document.documentElement.dataset.cave = "level-1";
+  ui.setHeading("Aventura", "Elige un caballero");
+  ui.showHud(false);
+  ui.hideDock();
+  ui.hideOverlay();
+  voice.stop();
+  ui.showPicker(CHARACTERS, (id) => {
+    character = getCharacter(id);
+    showIntro(levelsFor(id)[0]);
+  });
+}
+
 function showIntro(nextLevel, hearts = nextLevel.playerHearts) {
   level = nextLevel;
   carriedHearts = Math.min(level.playerHearts, hearts);
-  actors = createActors(level);
+  actors = createActors(level, character);
   actors.reduced = reducedMotion;
+  ui.hidePicker();
   ui.setLevel(level);
   ui.showHud(false);
   ui.hideDock();
+  voice.stop();
   screen = "intro";
-  const tables = level.tables.join(", ");
   const heartsLabel = carriedHearts === 1 ? "1 corazón" : `${carriedHearts} corazones`;
   bindOverlay({
     kicker: level.type === "treasure" ? "Desafío final" : "Nueva cueva",
     title: level.name,
-    body:
-      level.type === "treasure"
-        ? `Tablas ${tables}. El cofre cede con ${level.dragonHp} aciertos. Llevas ${heartsLabel}.`
-        : `Tablas ${tables}. El dragón tiene ${level.dragonHp} de vida. Llevas ${heartsLabel}.`,
-    action: level.type === "treasure" ? "Abrir el desafío" : "Comenzar",
+    body: introBody(level, heartsLabel),
+    action: level.prompt ? "Entrar" : level.type === "treasure" ? "Abrir el desafío" : "Comenzar",
     onAction: beginMatch,
   });
+}
+
+function introBody(level, heartsLabel) {
+  if (level.prompt) {
+    return `Escucha y toca lo que oyes. El dragón tiene ${level.dragonHp} de vida. Llevas ${heartsLabel}.`;
+  }
+  const tables = level.tables.join(", ");
+  return level.type === "treasure"
+    ? `Tablas ${tables}. El cofre cede con ${level.dragonHp} aciertos. Llevas ${heartsLabel}.`
+    : `Tablas ${tables}. El dragón tiene ${level.dragonHp} de vida. Llevas ${heartsLabel}.`;
 }
 
 function beginMatch() {
@@ -88,12 +124,18 @@ function beginMatch() {
 function showCurrentRound() {
   const round = currentRound(match);
   ui.showRound(round, match.index);
+  if (round?.question.spoken) {
+    voice.ask(round.question.spoken);
+    return;
+  }
+  voice.stop();
 }
 
 function onAnswer(optionIndex) {
   if (screen !== "match" || playback || match?.phase !== "playing") {
     return;
   }
+  voice.stop();
   match = submitAnswer(match, optionIndex);
   const round = match.rounds[match.lastResult.questionIndex];
   ui.markAnswer(match.lastResult);
@@ -132,7 +174,9 @@ function revealImpact(round) {
       ? level.type === "treasure"
         ? "El candado cede."
         : "Golpe certero."
-      : `Casi. ${question.a} × ${question.b} = ${question.product}.`,
+      : question.product != null
+        ? `Casi. ${question.a} × ${question.b} = ${question.product}.`
+        : "Casi.",
   );
 }
 
@@ -153,6 +197,7 @@ function finishFeedback() {
 function showCleared() {
   screen = "levelComplete";
   ui.hideDock();
+  voice.stop();
   const next = nextLevel(level.id);
   if (!next) {
     showVictory();
@@ -170,6 +215,7 @@ function showCleared() {
 function showGameOver() {
   screen = "gameOver";
   ui.hideDock();
+  voice.stop();
   bindOverlay({
     kicker: "Intento terminado",
     title: "El dragón sigue despierto",
@@ -182,32 +228,23 @@ function showGameOver() {
 function showVictory() {
   screen = "victory";
   ui.hideDock();
+  voice.stop();
+  const gael = character?.id === "gael";
   bindOverlay({
     kicker: "Tesoro",
-    title: "El cofre se abre",
-    body: "Las tablas 9 y 10 quedaron contigo.",
-    action: "Jugar otra vez",
-    onAction: () => {
-      screen = "title";
-      level = getLevel("level-1");
-      actors = createActors(level);
-      actors.reduced = reducedMotion;
-      ui.setLevel(level);
-      ui.showHud(false);
-      bindOverlay({
-        kicker: "Aventura",
-        title: "Dungeons & Puzzles",
-        body: "Un caballero, un dragón y las tablas de multiplicar.",
-        action: "Entrar a la cueva",
-        onAction: () => showIntro(getLevel("level-1")),
-      });
-    },
+    title: gael ? "La cueva queda en calma" : "El cofre se abre",
+    body: gael
+      ? "Colores, formas, números y vocales quedaron contigo."
+      : "Las tablas 9 y 10 quedaron contigo.",
+    action: "Elegir caballero",
+    onAction: showTitle,
   });
 }
 
 function nextLevel(id) {
-  const index = LEVELS.findIndex((item) => item.id === id);
-  return LEVELS[index + 1] ?? null;
+  const path = levelsFor(character.id);
+  const index = path.findIndex((item) => item.id === id);
+  return path[index + 1] ?? null;
 }
 
 function bindOverlay(view) {

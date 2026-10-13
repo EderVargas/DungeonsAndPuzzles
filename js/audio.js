@@ -5,11 +5,14 @@
 
 const MUSIC_SRC = "assets/audio/the-old-tower-inn.mp3";
 const MUTE_KEY = "dungeons-puzzles-muted";
+/** 60% of the element maximum. The spoken question is always louder, and the track pauses while it plays. */
+export const MUSIC_VOLUME = 0.6;
 
 export function createAudio() {
   let context = null;
   let music = null;
   let muted = readMuted();
+  let heldByVoice = false;
 
   function audio() {
     const AudioCtx = globalThis.AudioContext || globalThis.webkitAudioContext;
@@ -47,7 +50,7 @@ export function createAudio() {
       music = new Audio(MUSIC_SRC);
       music.loop = true;
       music.preload = "auto";
-      music.volume = 0.22;
+      music.volume = MUSIC_VOLUME;
       music.hidden = true;
       globalThis.document?.body?.append(music);
     }
@@ -56,8 +59,9 @@ export function createAudio() {
 
   function startMusic() {
     const song = track();
+    song.volume = MUSIC_VOLUME;
     song.muted = muted;
-    if (muted) {
+    if (muted || heldByVoice) {
       return;
     }
     const pending = song.play();
@@ -101,6 +105,19 @@ export function createAudio() {
       audio();
       startMusic();
       return muted;
+    },
+    pauseForVoice() {
+      heldByVoice = true;
+      music?.pause();
+    },
+    resumeAfterVoice() {
+      if (!heldByVoice) {
+        return;
+      }
+      heldByVoice = false;
+      if (!muted) {
+        startMusic();
+      }
     },
     play(name) {
       const cues = {
