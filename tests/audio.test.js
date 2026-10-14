@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
-import { afterEach, describe, it } from "node:test";
+import { afterEach, describe, it, mock } from "node:test";
 import { createAudio, MUSIC_VOLUME } from "../js/audio.js";
-import { createVoice } from "../js/voice.js";
+import { createVoice, cueSpeech } from "../js/voice.js";
 
 const created = [];
 
@@ -176,5 +176,59 @@ describe("music under a spoken question", () => {
     assert.equal(created[0].paused, true);
     audio.releaseFromBackground();
     assert.equal(created[0].paused, false);
+  });
+});
+
+describe("preschool screen narration", () => {
+  it("reads the message and names the button", () => {
+    assert.equal(
+      cueSpeech({
+        kicker: "Nueva cueva",
+        title: "Los colores",
+        body: "Escucha y toca lo que oyes. El dragón tiene 4 de vida. Llevas 3 corazones.",
+        cues: [{ label: "Entrar", purpose: "entrar a la cueva" }],
+      }),
+      "Nueva cueva. Los colores. Escucha y toca lo que oyes. El dragón tiene 4 de vida. Llevas 3 corazones. Da click en Entrar para entrar a la cueva.",
+    );
+  });
+
+  it("names both buttons on the victory screen", () => {
+    assert.equal(
+      cueSpeech({
+        kicker: "¡Lo lograste!",
+        title: "Ganaste la espada mística",
+        body: "El cofre se abrió. La espada queda contigo.",
+        cues: [
+          { label: "Otra vez", purpose: "jugar otra vez" },
+          { label: "Cambiar personaje", purpose: "cambiar de caballero" },
+        ],
+      }),
+      "¡Lo lograste! Ganaste la espada mística. El cofre se abrió. La espada queda contigo. Da click en Otra vez para jugar otra vez. Da click en Cambiar personaje para cambiar de caballero.",
+    );
+  });
+
+  it("repeats only after the line finishes, and stops when dismissed", () => {
+    const speech = fakeSpeech();
+    const voice = createVoice(speech.win);
+    mock.timers.enable({ apis: ["setTimeout"] });
+    try {
+      voice.narrate("Los colores. Da click en Entrar para entrar a la cueva.");
+      mock.timers.tick(7000);
+      assert.equal(speech.spoken.length, 1);
+
+      speech.endLatest();
+      mock.timers.tick(6999);
+      assert.equal(speech.spoken.length, 1);
+      mock.timers.tick(1);
+      assert.equal(speech.spoken.length, 2);
+      assert.equal(speech.spoken[1].text, speech.spoken[0].text);
+
+      voice.stop();
+      speech.endLatest();
+      mock.timers.tick(7000);
+      assert.equal(speech.spoken.length, 2);
+    } finally {
+      mock.timers.reset();
+    }
   });
 });

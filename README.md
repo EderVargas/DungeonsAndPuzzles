@@ -4,7 +4,7 @@ Juego de navegador con dos caballeros. Al empezar se elige uno y ese camino dura
 
 **Tablas (7-8 años).** Tres combates (tablas del 1 al 8) y un cofre (tablas del 9 y del 10).
 
-**Preguntas (3-4 años).** No hace falta leer. Una voz dice la pregunta y se toca una de cuatro imágenes: colores, formas, números del 1 al 5 y vocales. La última cueva es un cofre.
+**Preguntas (3-4 años).** No hace falta leer. Una voz dice la pregunta y se toca una de cuatro imágenes: colores, formas, números del 1 al 5 y vocales. En la pantalla de cada cueva, y al ganar o perder, la voz lee el mensaje y dice en qué botón dar click. La última cueva es un cofre.
 
 Los dos recorren cuevas con el mismo combate. En las primeras hay un dragón; en la última, un cofre. Cada acierto daña al rival o abre el candado. Cada error le quita un corazón al caballero. Los corazones no se recuperan entre niveles. Al ganar la espada mística se puede repetir con el mismo caballero o cambiar de personaje.
 

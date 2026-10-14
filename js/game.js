@@ -6,7 +6,7 @@ import { getLevel, levelsFor } from "./levels.js";
 import { createRenderer } from "./renderer.js";
 import { createRng } from "./rng.js";
 import { createUi } from "./ui.js";
-import { createVoice } from "./voice.js";
+import { createVoice, cueSpeech } from "./voice.js";
 
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const audio = createAudio();
@@ -87,12 +87,16 @@ function showIntro(nextLevel, hearts = nextLevel.playerHearts) {
   voice.stop();
   screen = "intro";
   const heartsLabel = carriedHearts === 1 ? "1 corazón" : `${carriedHearts} corazones`;
+  const action = level.type === "treasure" ? "Abrir el cofre" : level.prompt ? "Entrar" : "Comenzar";
   bindOverlay({
     kicker: level.type === "treasure" ? "Desafío final" : "Nueva cueva",
     title: level.name,
     body: introBody(level, heartsLabel),
-    action: level.type === "treasure" ? "Abrir el cofre" : level.prompt ? "Entrar" : "Comenzar",
+    action,
     onAction: beginMatch,
+    cues: level.prompt
+      ? [{ label: action, purpose: level.type === "treasure" ? "empezar" : "entrar a la cueva" }]
+      : undefined,
   });
 }
 
@@ -210,12 +214,16 @@ function showCleared() {
     showVictory();
     return;
   }
+  const action = next.type === "treasure" ? "Ir al cofre" : "Siguiente cueva";
   bindOverlay({
     kicker: "Cueva despejada",
     title: level.name,
     body: next.type === "treasure" ? "El cofre del tesoro espera." : "Otra cueva se abre más adelante.",
-    action: next.type === "treasure" ? "Ir al cofre" : "Siguiente cueva",
+    action,
     onAction: () => showIntro(next, match.combat.playerHearts),
+    cues: level.prompt
+      ? [{ label: action, purpose: next.type === "treasure" ? "ir al cofre" : "seguir a la otra cueva" }]
+      : undefined,
   });
 }
 
@@ -229,6 +237,7 @@ function showGameOver() {
     body: "Te quedaste sin corazones. Puedes volver a intentarlo.",
     action: "Reintentar",
     onAction: () => showIntro(level),
+    cues: level.prompt ? [{ label: "Reintentar", purpose: "volver a intentar" }] : undefined,
   });
 }
 
@@ -248,6 +257,12 @@ function showVictory() {
       icon: "person",
       onAction: showTitle,
     },
+    cues: level.prompt
+      ? [
+          { label: "Otra vez", purpose: "jugar otra vez" },
+          { label: "Cambiar personaje", purpose: "cambiar de caballero" },
+        ]
+      : undefined,
   });
 }
 
@@ -267,6 +282,17 @@ function nextLevel(id) {
 
 function bindOverlay(view) {
   ui.showOverlay(view);
+  if (!level.prompt || !view.cues?.length) {
+    return;
+  }
+  voice.narrate(
+    cueSpeech({
+      kicker: view.kicker,
+      title: view.title,
+      body: view.body,
+      cues: view.cues,
+    }),
+  );
 }
 
 function onKeyDown(event) {

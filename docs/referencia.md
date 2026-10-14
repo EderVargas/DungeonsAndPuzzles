@@ -32,6 +32,8 @@ La música de fondo es *The Old Tower Inn* y suena al 60 % del volumen máximo. 
 
 Mientras se dice una pregunta hablada, la música se pausa. Al terminar la frase, al cancelarla o al responder, la música vuelve desde donde se quedó. Entre una repetición y la siguiente (cada 7 segundos) la música sí suena. El camino de las tablas no tiene preguntas habladas, así que su música no se interrumpe. Silenciar el sonido apaga música y efectos; la voz de la pregunta sigue esa misma pausa y no reanuda la música si el jugador la dejó en silencio.
 
+En el camino de 3-4 años, esa misma voz lee la pantalla de cada cueva y los mensajes de cueva despejada, derrota y espada mística. Después dice en qué botón dar click y para qué. La frase se repite 7 segundos después de haber terminado, hasta que se toca un botón. El camino de las tablas no lee esas pantallas.
+
 ## Dónde está el código
 
 - `js/characters.js` — los dos caballeros
